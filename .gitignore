@@ -1,15 +1,8 @@
-# Eclipse
-.classpath
-.project
-.settings/
-bin/
+# Ignore Gradle project-specific cache directory
+.gradle
 
-# IntelliJ
-*.iml
-.idea/
+# Ignore Gradle build output directory
+build
 
-# Netbeans
-nbproject/
-
-# OS X
-.DS_Store
+# Ignore Kotlin plugin data
+.kotlin

@@ -1,5 +1,0 @@
-name: Bedwars
-main: com.gmail.filoghost.bedwars.Bedwars
-version: 1.0
-
-softdepend: [WildCommons, HolographicDisplays, HolographicMobs]

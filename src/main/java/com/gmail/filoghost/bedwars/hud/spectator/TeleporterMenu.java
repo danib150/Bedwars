@@ -41,8 +41,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import wild.api.WildCommons;
-//import wild.api.bridges.PexBridge;
-//import wild.api.bridges.PexBridge.PrefixSuffix;
+import wild.api.bridges.PexBridge;
+import wild.api.bridges.PexBridge.PrefixSuffix;
 import wild.api.menu.Icon;
 import wild.api.menu.IconBuilder;
 import wild.api.menu.IconMenu;
@@ -108,7 +108,8 @@ public class TeleporterMenu {
 			
 			ItemStack headItem = Utils.getHeadItem(gamerStatus.getPlayer());
 			ItemMeta headItemMeta = headItem.getItemMeta();
-			headItemMeta.setDisplayName(ChatColor.WHITE + WildCommons.color(gamer.getName()));
+			PrefixSuffix prefixSuffix = PexBridge.getCachedPrefixSuffix(gamer);
+			headItemMeta.setDisplayName(ChatColor.WHITE + WildCommons.color(prefixSuffix.getPrefix() + gamer.getName() + prefixSuffix.getSuffix()));
 			headItemMeta.setLore(Arrays.asList(gamerStatus.getTeam().getChatColor() + "Team " + gamerStatus.getTeam().getNameSingular()));
 			headItem.setItemMeta(headItemMeta);
 			

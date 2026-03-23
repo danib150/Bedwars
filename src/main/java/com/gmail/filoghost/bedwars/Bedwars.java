@@ -77,7 +77,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.cubespace.yamler.YamlerConfigurationException;
 import wild.api.WildCommons;
-//import wild.api.bridges.CosmeticsBridge;
+import wild.api.bridges.CosmeticsBridge;
 import wild.api.command.CommandFramework.ExecuteException;
 import wild.api.item.BookTutorial;
 import wild.api.util.CaseInsensitiveMap;
@@ -228,7 +228,7 @@ public class Bedwars extends JavaPlugin {
 		player.setHealth(player.getMaxHealth());
 		player.teleport(spawn);
 		giveLobbyEquip(player);
-		//CosmeticsBridge.updateCosmetics(player, CosmeticsBridge.Status.LOBBY);
+		CosmeticsBridge.updateCosmetics(player, CosmeticsBridge.Status.LOBBY);
 		
 		PlayerData stats = Bedwars.getPlayerData(player);
 		LobbyScoreboard mainScoreboard = Bedwars.getMainScoreboard();
@@ -246,7 +246,7 @@ public class Bedwars extends JavaPlugin {
 		
 		PlayerInventory inventory = player.getInventory();
 		bookTutorial.giveTo(inventory);
-		//CosmeticsBridge.giveCosmeticsItems(inventory);
+		CosmeticsBridge.giveCosmeticsItems(inventory);
 	}
 	
 	public static Collection<Arena> getAllArenas() {

@@ -31,6 +31,8 @@ package com.gmail.filoghost.bedwars.arena.specialization;
 import java.util.Collection;
 import java.util.Map;
 
+import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import me.filoghost.holographicdisplays.api.hologram.line.TextHologramLine;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Wither;
@@ -42,9 +44,6 @@ import com.gmail.filoghost.bedwars.arena.TeamStatus;
 import com.gmail.filoghost.bedwars.arena.entities.EntityOwnership;
 import com.gmail.filoghost.bedwars.nms.StationaryWither;
 import com.gmail.filoghost.bedwars.utils.Utils;
-import com.gmail.filoghost.holographicdisplays.api.Hologram;
-import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
-import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import com.google.common.collect.Maps;
 
 public class Boss {
@@ -60,12 +59,12 @@ public class Boss {
 	public Boss(Arena arena, Collection<TeamStatus> teamStatuses, Location location, int maxHealth) {
 		location = location.clone();
 		bossStatusByTeam = Maps.newEnumMap(Team.class);
-		hologram = HologramsAPI.createHologram(Bedwars.get(), location);
-		hologram.appendTextLine("Uccidi il boss prima degli altri team!");
+		hologram = Bedwars.getHolographicDisplaysAPI().createHologram(location);
+		hologram.getLines().appendText("Uccidi il boss prima degli altri team!");
 		
 		for (TeamStatus teamStatus : teamStatuses) {
 			if (teamStatus.getSpecialization() == null && teamStatus.getActiveSpecializationPoll() == null) {
-				bossStatusByTeam.put(teamStatus.getTeam(), new TeamBossStatus(teamStatus.getTeam(), maxHealth, hologram.appendTextLine("")));
+				bossStatusByTeam.put(teamStatus.getTeam(), new TeamBossStatus(teamStatus.getTeam(), maxHealth, hologram.getLines().appendText("")));
 			}
 		}
 		
@@ -73,8 +72,7 @@ public class Boss {
 		//wither.setCustomName("Boss");
 		//wither.setCustomNameVisible(false);
 		EntityOwnership.set(wither, arena, null);
-		
-		hologram.teleport(location.add(0, hologram.getHeight() + 3.5, 0));
+		hologram.setPosition(location.add(0, hologram.getLines().getHeight() + 3.5, 0));
 	}
 	
 	public void despawn() {
@@ -112,9 +110,9 @@ public class Boss {
 		private Team team;
 		private final double maxHealth;
 		private double health;
-		private TextLine healthBar;
+		private TextHologramLine healthBar;
 		
-		public TeamBossStatus(Team team, double maxHealth, TextLine healthBar) {
+		public TeamBossStatus(Team team, double maxHealth, TextHologramLine healthBar) {
 			this.team = team;
 			this.maxHealth = maxHealth;
 			this.health = maxHealth;

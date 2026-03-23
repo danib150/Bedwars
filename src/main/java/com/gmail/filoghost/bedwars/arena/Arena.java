@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.gmail.filoghost.bedwars.npc.CitizensShopNpc;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -49,7 +50,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -85,8 +85,6 @@ import com.gmail.filoghost.bedwars.settings.objects.ArenaConfig;
 import com.gmail.filoghost.bedwars.settings.objects.SpawnerConfig;
 import com.gmail.filoghost.bedwars.settings.objects.TeamConfig;
 import com.gmail.filoghost.bedwars.utils.Utils;
-import com.gmail.filoghost.holographicmobs.api.HolographicMobsAPI;
-import com.gmail.filoghost.holographicmobs.object.types.HologramVillager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -119,7 +117,7 @@ public class Arena {
 	private final Map<Team, TeamStatus> teamStatuses;
 	
 	// Dynamic objects
-	@Getter private final List<HologramVillager> villagers;
+	@Getter private final List<CitizensShopNpc> villagers;
 	@Getter private final List<Spawner> globalSpawners;
 	@Getter private TeamSelectorMenu teamSelectorMenu;
 	@Getter private TeleporterMenu teleporterMenu;
@@ -162,18 +160,20 @@ public class Arena {
 			TeamConfig teamConfig = entry.getValue();
 			TeamStatus status = new TeamStatus(this, team, teamConfig.spawnLocation.getLocation(), teamConfig.bedHeadLocation.getBlock(), teamConfig.bedHeadLocation.getBlock().getRelative(teamConfig.bedFeetDirection));
 			this.teamStatuses.put(team, status);
-			
-			HologramVillager teamVillager = HolographicMobsAPI.spawnVillager(teamConfig.teamVillagerLocation.getLocation());
-			teamVillager.setProfession(Profession.PRIEST);
-			teamVillager.setCustomName(Lists.newArrayList(ChatColor.BOLD + "POTENZIAMENTI", ChatColor.GRAY + "(Click sinistro)"));
-			teamVillager.setClickHandler(clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getTeamShop));
-			teamVillager.update();
+			CitizensShopNpc teamVillager = new CitizensShopNpc(
+					teamConfig.teamVillagerLocation.getLocation(),
+					ChatColor.BOLD + "POTENZIAMENTI",
+					clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getTeamShop)
+			);
+			Bedwars.getCitizensNpcClickListener().register(teamVillager);
 			villagers.add(teamVillager);
-			
-			HologramVillager itemVillager = HolographicMobsAPI.spawnVillager(teamConfig.itemVillagerLocation.getLocation());
-			itemVillager.setCustomName(Lists.newArrayList(ChatColor.BOLD + "OGGETTI", ChatColor.GRAY + "(Click sinistro)"));
-			itemVillager.setClickHandler(clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getIndividualShop));
-			itemVillager.update();
+
+			CitizensShopNpc itemVillager = new CitizensShopNpc(
+					teamConfig.itemVillagerLocation.getLocation(),
+					ChatColor.BOLD + "OGGETTI",
+					clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getIndividualShop)
+			);
+			Bedwars.getCitizensNpcClickListener().register(itemVillager);
 			villagers.add(itemVillager);
 		}
 		
@@ -195,8 +195,14 @@ public class Arena {
 		for (TeamStatus teamStatus : teamStatuses.values()) {
 			events.getProtectedBlocksRegistry().setRangeProtectionReason(teamStatus.getSpawnPoint().getBlock(), config.spawnProtectionRadius, ProtectionReason.SPAWN);
 		}
-		for (HologramVillager villager : villagers) {
-			events.getProtectedBlocksRegistry().setRangeProtectionReason(villager.getLocation().getBlock(), config.villagerProtectionRadius, ProtectionReason.SPAWN);
+		for (CitizensShopNpc villager : villagers) {
+			if (villager.getNpc().isSpawned()) {
+				events.getProtectedBlocksRegistry().setRangeProtectionReason(
+						villager.getNpc().getEntity().getLocation().getBlock(),
+						config.villagerProtectionRadius,
+						ProtectionReason.SPAWN
+				);
+			}
 		}
 		for (Spawner globalSpawner : globalSpawners) {
 			events.getProtectedBlocksRegistry().setRangeProtectionReason(globalSpawner.getBlock(), config.generatorsProtectionRadius, ProtectionReason.GENERATORS);
@@ -236,13 +242,23 @@ public class Arena {
 				}
 			}
 			
-			// Pulizia oggetti e entità
+			// Pulizia oggetti e entità skippa le entities Citizens
 			for (Entity entity : chunk.getEntities()) {
-				if (entity.getType() == EntityType.DROPPED_ITEM || (entity instanceof LivingEntity && entity.getType() != EntityType.PLAYER)) {
-					if (region.isInside(entity.getLocation())) {
-						entity.remove();
-					}
+				boolean removable = entity.getType() == EntityType.DROPPED_ITEM || (entity instanceof LivingEntity && entity.getType() != EntityType.PLAYER);
+
+				if (!removable) {
+					continue;
 				}
+
+				if (!region.isInside(entity.getLocation())) {
+					continue;
+				}
+
+				if (net.citizensnpcs.api.CitizensAPI.getNPCRegistry().isNPC(entity)) {
+					continue;
+				}
+
+				entity.remove();
 			}
 		});
 

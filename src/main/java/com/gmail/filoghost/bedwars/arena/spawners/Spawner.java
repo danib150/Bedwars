@@ -28,18 +28,18 @@
  */
 package com.gmail.filoghost.bedwars.arena.spawners;
 
+import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import me.filoghost.holographicdisplays.api.hologram.line.TextHologramLine;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Bed;
 import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.bedwars.Bedwars;
 import com.gmail.filoghost.bedwars.utils.ResourceLocator;
-import com.gmail.filoghost.holographicdisplays.api.Hologram;
-import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
-import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -54,7 +54,7 @@ public class Spawner {
 	
 	private final ResourceType resource;
 	private final Block block;
-	@Setter private TextLine progressLine;
+	@Setter private TextHologramLine progressLine;
 	private int lastColoredSymbolsAmount;
 	private int spawnInterval;
 	
@@ -84,9 +84,9 @@ public class Spawner {
 		}
 		
 		if (hologramName != null) {
-			Hologram hologram = HologramsAPI.createHologram(Bedwars.get(), block.getLocation().add(0.5, 3.0, 0.5));
-			hologram.appendTextLine("Gen. di " + resource.getChatColor() + ChatColor.BOLD + hologramName);
-			this.progressLine = hologram.appendTextLine("");
+			Hologram hologram = Bedwars.getHolographicDisplaysAPI().createHologram(block.getLocation().add(0.5, 3.0, 0.5));
+			hologram.getLines().appendText("Gen. di " + resource.getChatColor() + ChatColor.BOLD + hologramName);
+			this.progressLine = hologram.getLines().appendText("");
 		}
 		reset();
 	}

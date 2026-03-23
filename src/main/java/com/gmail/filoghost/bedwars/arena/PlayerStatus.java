@@ -38,7 +38,7 @@ import com.gmail.filoghost.bedwars.arena.shop.upgrade.UpgradableStatus;
 
 import lombok.Getter;
 import lombok.Setter;
-import wild.api.bridges.CosmeticsBridge;
+
 
 public class PlayerStatus extends UpgradableStatus<PlayerUpgrade> {
 
@@ -63,11 +63,6 @@ public class PlayerStatus extends UpgradableStatus<PlayerUpgrade> {
 	public void setSpectator(Player player, boolean spectator) {
 		this.spectator = spectator;
 		VanishManager.setHidden(player, spectator);
-		if (spectator) {
-			CosmeticsBridge.updateCosmetics(player, CosmeticsBridge.Status.SPECTATOR);
-		} else {
-			CosmeticsBridge.updateCosmetics(player, CosmeticsBridge.Status.GAME);
-		}
 	}
 
 	public void startTrapCooldown(int ticks, Trap trap) {

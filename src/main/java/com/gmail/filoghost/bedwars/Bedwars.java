@@ -34,6 +34,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.gmail.filoghost.bedwars.npc.CitizensNpcClickListener;
+import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -77,7 +80,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.cubespace.yamler.YamlerConfigurationException;
 import wild.api.WildCommons;
-import wild.api.bridges.CosmeticsBridge;
 import wild.api.command.CommandFramework.ExecuteException;
 import wild.api.item.BookTutorial;
 import wild.api.util.CaseInsensitiveMap;
@@ -85,9 +87,13 @@ import wild.api.util.CaseInsensitiveMap;
 public class Bedwars extends JavaPlugin {
 
 	public static final String PREFIX = ChatColor.GRAY + "[" + ChatColor.LIGHT_PURPLE + "Bed Wars" + ChatColor.GRAY + "] ";
-	
+
 	private static Bedwars plugin;
 	@Getter private static TickTimer tickTimer;
+
+	@Getter private static CitizensNpcClickListener citizensNpcClickListener;
+
+	@Getter private static HolographicDisplaysAPI holographicDisplaysAPI;
 	@Getter private static PodiumSettings podiumSettings;
 	private static BookTutorial bookTutorial;
 	@Getter @Setter private static Location spawn;
@@ -108,7 +114,11 @@ public class Bedwars extends JavaPlugin {
 		if (!checkDependancies()) {
 			return;
 		}
-		
+
+		citizensNpcClickListener = new CitizensNpcClickListener();
+		getServer().getPluginManager().registerEvents(citizensNpcClickListener, this);
+
+
 		bookTutorial = new BookTutorial(this, "Bed Wars");
 		
 		// Impostazioni
@@ -178,7 +188,9 @@ public class Bedwars extends JavaPlugin {
 		new StatsCommand(this, "stats");
 		new PodiumCommand(this, "podium");
 		new GlobalCommand(this, "g");
-		
+
+		holographicDisplaysAPI = HolographicDisplaysAPI.get(this);
+
 		// Carica le arene salvate
 		for (File arenaFile : arenasFolder.listFiles()) {
 			try {
@@ -228,7 +240,6 @@ public class Bedwars extends JavaPlugin {
 		player.setHealth(player.getMaxHealth());
 		player.teleport(spawn);
 		giveLobbyEquip(player);
-		CosmeticsBridge.updateCosmetics(player, CosmeticsBridge.Status.LOBBY);
 		
 		PlayerData stats = Bedwars.getPlayerData(player);
 		LobbyScoreboard mainScoreboard = Bedwars.getMainScoreboard();
@@ -246,7 +257,7 @@ public class Bedwars extends JavaPlugin {
 		
 		PlayerInventory inventory = player.getInventory();
 		bookTutorial.giveTo(inventory);
-		CosmeticsBridge.giveCosmeticsItems(inventory);
+
 	}
 	
 	public static Collection<Arena> getAllArenas() {
@@ -328,7 +339,7 @@ public class Bedwars extends JavaPlugin {
 	
 	
 	private boolean checkDependancies() {
-		return checkDependancy("WildCommons") && checkDependancy("HolographicDisplays") && checkDependancy("HolographicMobs");
+		return checkDependancy("WildCommons") && checkDependancy("Citizens") && checkDependancy("HolographicDisplays");
 	}
 	
 	private boolean checkDependancy(String pluginName) {

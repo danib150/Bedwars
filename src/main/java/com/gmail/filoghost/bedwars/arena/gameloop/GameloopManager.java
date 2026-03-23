@@ -31,6 +31,7 @@ package com.gmail.filoghost.bedwars.arena.gameloop;
 import java.util.Collections;
 import java.util.List;
 
+import com.gmail.filoghost.bedwars.npc.CitizensShopNpc;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
@@ -49,7 +50,6 @@ import com.gmail.filoghost.bedwars.listener.ChunkUnloadListener;
 import com.gmail.filoghost.bedwars.settings.MainSettings;
 import com.gmail.filoghost.bedwars.timer.CountdownTimer;
 import com.gmail.filoghost.bedwars.utils.Utils;
-import com.gmail.filoghost.holographicmobs.object.types.HologramVillager;
 import com.google.common.collect.Lists;
 
 import lombok.Getter;
@@ -199,8 +199,10 @@ public class GameloopManager {
 				ChunkUnloadListener.setAlwaysLoaded(spawner.getBlock().getChunk(), arena);
 			}
 		}
-		for (HologramVillager villager : arena.getVillagers()) {
-			ChunkUnloadListener.setAlwaysLoaded(villager.getLocation().getChunk(), arena);
+		for (CitizensShopNpc villager : arena.getVillagers()) {
+			if (villager.getNpc().isSpawned()) {
+				ChunkUnloadListener.setAlwaysLoaded(villager.getNpc().getEntity().getLocation().getChunk(), arena);
+			}
 		}
 		ChunkUnloadListener.setAlwaysLoaded(arena.getBossManager().getBossLocation().getChunk(), arena);
 		

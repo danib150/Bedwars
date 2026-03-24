@@ -31,7 +31,8 @@ package com.gmail.filoghost.bedwars.arena.gameloop;
 import java.util.Collections;
 import java.util.List;
 
-import com.gmail.filoghost.bedwars.npc.CitizensShopNpc;
+
+import com.gmail.filoghost.bedwars.npc.BukkitShopNpc;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
@@ -82,51 +83,59 @@ public class GameloopManager {
 			Utils.reportAnomaly("checking winners in wrong arena status", this, arena.getArenaStatus());
 			return;
 		}
-		
+
 		Team winnerTeam = null;
 		for (PlayerStatus playerStatus : arena.getPlayerStatuses()) {
 			if (playerStatus.getTeam() == null) {
 				continue;
 			}
-			
+
 			if (winnerTeam == null) {
 				winnerTeam = playerStatus.getTeam();
-			} else {
-				if (winnerTeam != playerStatus.getTeam()) {
-					// Almeno un team diverso
-					return;
-				}
+			} else if (winnerTeam != playerStatus.getTeam()) {
+				// C'è ancora più di un team in gioco
+				return;
 			}
 		}
-		
-		// Un team ha vinto se siamo arrivati qui
+
+		// Nessun team rimasto: nessun vincitore
+		if (winnerTeam == null) {
+			arena.setArenaStatus(ArenaStatus.ENDING);
+			arena.broadcast(ChatColor.GRAY + "La partita è terminata senza vincitori.");
+			cancelCombatCountdown();
+			startWinCountdown();
+			return;
+		}
+
 		long duration = System.currentTimeMillis() - startTime;
 		SQLManager.insertAnalyticsAsync("duration", String.valueOf(duration), arena);
-		
+
 		arena.setArenaStatus(ArenaStatus.ENDING);
 		arena.broadcast(ChatColor.GRAY + "Il team " + winnerTeam.getChatColor() + winnerTeam.getNameSingular() + ChatColor.GRAY + " ha vinto la partita!");
-		
-		// Statistiche sui rate di vittoria e di sconfitta delle specializzazioni
+
 		for (TeamStatus teamStatus : arena.getTeamStatuses()) {
-			SQLManager.insertAnalyticsAsync(teamStatus.getTeam() == winnerTeam ? "spec_win" : "spec_loss", teamStatus.getSpecialization() != null ? teamStatus.getSpecialization().name() : "NONE", arena);
+			SQLManager.insertAnalyticsAsync(
+					teamStatus.getTeam() == winnerTeam ? "spec_win" : "spec_loss",
+					teamStatus.getSpecialization() != null ? teamStatus.getSpecialization().name() : "NONE",
+					arena
+			);
 		}
-		
+
 		for (PlayerStatus playerStatus : arena.getPlayerStatuses()) {
 			Player player = playerStatus.getPlayer();
-			
+
 			if (playerStatus.getTeam() == winnerTeam) {
 				Bedwars.getPlayerData(player).addWin(arena);
 			}
-			
+
 			if (player.isDead()) {
-				WildCommons.respawn(player); // Respawna i giocatori morti per evitare crash
+				WildCommons.respawn(player);
 			}
 		}
-		
+
 		cancelCombatCountdown();
 		startWinCountdown();
 	}
-	
 	
 	/*
 	 * 
@@ -207,9 +216,12 @@ public class GameloopManager {
 				ChunkUnloadListener.setAlwaysLoaded(spawner.getBlock().getChunk(), arena);
 			}
 		}
-		for (CitizensShopNpc villager : arena.getVillagers()) {
-			if (villager.getNpc().isSpawned()) {
-				ChunkUnloadListener.setAlwaysLoaded(villager.getNpc().getEntity().getLocation().getChunk(), arena);
+		for (BukkitShopNpc villager : arena.getVillagers()) {
+			if (villager.getVillager() != null && !villager.getVillager().isDead()) {
+				ChunkUnloadListener.setAlwaysLoaded(
+						villager.getVillager().getLocation().getChunk(),
+						arena
+				);
 			}
 		}
 		ChunkUnloadListener.setAlwaysLoaded(arena.getBossManager().getBossLocation().getChunk(), arena);

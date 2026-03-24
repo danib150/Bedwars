@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.gmail.filoghost.bedwars.npc.CitizensShopNpc;
+import com.gmail.filoghost.bedwars.npc.BukkitShopNpc;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -46,10 +46,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -117,7 +114,7 @@ public class Arena {
 	private final Map<Team, TeamStatus> teamStatuses;
 	
 	// Dynamic objects
-	@Getter private final List<CitizensShopNpc> villagers;
+	@Getter private final List<BukkitShopNpc> villagers;
 	@Getter private final List<Spawner> globalSpawners;
 	@Getter private TeamSelectorMenu teamSelectorMenu;
 	@Getter private TeleporterMenu teleporterMenu;
@@ -130,10 +127,10 @@ public class Arena {
 	@Getter private final SpecializationManager specManager;
 	@Getter private final SpawningManager spawningManager;
 	@Getter private final ShopManager shopManager;
-	
+
 	public Arena(ArenaConfig config) throws Exception {
 		CommandValidateExtra.checkArenaConfig(config);
-		
+
 		this.name = config.name;
 		this.region = new Region(config);
 		this.lobby = config.bossLocation.getLocation();
@@ -142,7 +139,7 @@ public class Arena {
 		this.maxPlayersPerTeam = config.maxPlayersPerTeam;
 		this.maxPlayers = maxPlayersPerTeam * config.teamConfigs.size();
 		this.minPlayers = maxPlayers;
-		
+
 		this.scoreboard = new ScoreboardManager();
 		this.gameloop = new GameloopManager(this);
 		this.events = new EventManager(this, new PlacedBlocksRegistry(region), new ProtectedBlocksRegistry(region));
@@ -152,66 +149,86 @@ public class Arena {
 		this.bossManager = new BossManager(this, config.bossLocation.getLocation());
 
 		this.villagers = Lists.newArrayList();
-		
+
 		this.playerStatuses = Maps.newConcurrentMap();
 		this.teamStatuses = new EnumMap<>(Team.class);
+
 		for (Entry<String, TeamConfig> entry : config.teamConfigs.entrySet()) {
 			Team team = Team.valueOf(entry.getKey().toUpperCase());
 			TeamConfig teamConfig = entry.getValue();
-			TeamStatus status = new TeamStatus(this, team, teamConfig.spawnLocation.getLocation(), teamConfig.bedHeadLocation.getBlock(), teamConfig.bedHeadLocation.getBlock().getRelative(teamConfig.bedFeetDirection));
+
+			TeamStatus status = new TeamStatus(
+					this,
+					team,
+					teamConfig.spawnLocation.getLocation(),
+					teamConfig.bedHeadLocation.getBlock(),
+					teamConfig.bedHeadLocation.getBlock().getRelative(teamConfig.bedFeetDirection)
+			);
 			this.teamStatuses.put(team, status);
-			CitizensShopNpc teamVillager = new CitizensShopNpc(
+
+			BukkitShopNpc teamVillager = new BukkitShopNpc(
 					teamConfig.teamVillagerLocation.getLocation(),
+					Villager.Profession.PRIEST,
 					ChatColor.BOLD + "POTENZIAMENTI",
 					clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getTeamShop)
 			);
-			Bedwars.getCitizensNpcClickListener().register(teamVillager);
 			villagers.add(teamVillager);
 
-			CitizensShopNpc itemVillager = new CitizensShopNpc(
+			BukkitShopNpc itemVillager = new BukkitShopNpc(
 					teamConfig.itemVillagerLocation.getLocation(),
+					Villager.Profession.BLACKSMITH,
 					ChatColor.BOLD + "OGGETTI",
 					clicker -> shopManager.tryOpenShop(clicker, TeamStatus::getIndividualShop)
 			);
-			Bedwars.getCitizensNpcClickListener().register(itemVillager);
 			villagers.add(itemVillager);
 		}
-		
+
 		this.globalSpawners = Lists.newArrayList();
 		for (SpawnerConfig spawnerConfig : config.spawners) {
 			Spawner spawner = new Spawner(spawnerConfig.type, spawnerConfig.block.getBlock(), maxPlayersPerTeam);
-			
+
 			if (spawner.getResource().isPublic()) {
-				// Imposta come globale
 				this.globalSpawners.add(spawner);
 			} else {
-				// Aggiungi al team più vicino
 				getNearestTeam(spawner.getBlock()).getTeamSpawners().add(spawner);
 			}
 		}
-		
-		
-		events.getProtectedBlocksRegistry().setRangeProtectionReason(bossManager.getBossLocation().getBlock(), config.bossProtectionRadius, ProtectionReason.BOSS);
+
+		events.getProtectedBlocksRegistry().setRangeProtectionReason(
+				bossManager.getBossLocation().getBlock(),
+				config.bossProtectionRadius,
+				ProtectionReason.BOSS
+		);
+
 		for (TeamStatus teamStatus : teamStatuses.values()) {
-			events.getProtectedBlocksRegistry().setRangeProtectionReason(teamStatus.getSpawnPoint().getBlock(), config.spawnProtectionRadius, ProtectionReason.SPAWN);
+			events.getProtectedBlocksRegistry().setRangeProtectionReason(
+					teamStatus.getSpawnPoint().getBlock(),
+					config.spawnProtectionRadius,
+					ProtectionReason.SPAWN
+			);
 		}
-		for (CitizensShopNpc villager : villagers) {
-			if (villager.getNpc().isSpawned()) {
+
+		for (BukkitShopNpc villager : villagers) {
+			if (villager.getVillager() != null && !villager.getVillager().isDead()) {
 				events.getProtectedBlocksRegistry().setRangeProtectionReason(
-						villager.getNpc().getEntity().getLocation().getBlock(),
+						villager.getVillager().getLocation().getBlock(),
 						config.villagerProtectionRadius,
 						ProtectionReason.SPAWN
 				);
 			}
 		}
+
 		for (Spawner globalSpawner : globalSpawners) {
-			events.getProtectedBlocksRegistry().setRangeProtectionReason(globalSpawner.getBlock(), config.generatorsProtectionRadius, ProtectionReason.GENERATORS);
+			events.getProtectedBlocksRegistry().setRangeProtectionReason(
+					globalSpawner.getBlock(),
+					config.generatorsProtectionRadius,
+					ProtectionReason.GENERATORS
+			);
 		}
-		
+
 		reset();
 	}
-	
-	
+
 	public void reset() {
 		arenaStatus = ArenaStatus.LOBBY;
 		
@@ -241,24 +258,15 @@ public class Arena {
 					getNearestTeam(chest.getBlock()).getTeamChests().add(chest.getBlock());
 				}
 			}
-			
-			// Pulizia oggetti e entità skippa le entities Citizens
+
+			// Pulizia oggetti e entità
+
 			for (Entity entity : chunk.getEntities()) {
-				boolean removable = entity.getType() == EntityType.DROPPED_ITEM || (entity instanceof LivingEntity && entity.getType() != EntityType.PLAYER);
-
-				if (!removable) {
-					continue;
+				if (entity.getType() == EntityType.DROPPED_ITEM || (entity instanceof LivingEntity && entity.getType() != EntityType.VILLAGER && entity.getType() != EntityType.PLAYER)) {
+					if (region.isInside(entity.getLocation())) {
+						entity.remove();
+					}
 				}
-
-				if (!region.isInside(entity.getLocation())) {
-					continue;
-				}
-
-				if (net.citizensnpcs.api.CitizensAPI.getNPCRegistry().isNPC(entity)) {
-					continue;
-				}
-
-				entity.remove();
 			}
 		});
 

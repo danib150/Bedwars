@@ -30,12 +30,10 @@ package com.gmail.filoghost.bedwars;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
-import com.gmail.filoghost.bedwars.npc.CitizensNpcClickListener;
+import com.gmail.filoghost.bedwars.npc.BukkitNpcClickListener;
 import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -91,7 +89,6 @@ public class Bedwars extends JavaPlugin {
 	private static Bedwars plugin;
 	@Getter private static TickTimer tickTimer;
 
-	@Getter private static CitizensNpcClickListener citizensNpcClickListener;
 
 	@Getter private static HolographicDisplaysAPI holographicDisplaysAPI;
 	@Getter private static PodiumSettings podiumSettings;
@@ -115,8 +112,6 @@ public class Bedwars extends JavaPlugin {
 			return;
 		}
 
-		citizensNpcClickListener = new CitizensNpcClickListener();
-		getServer().getPluginManager().registerEvents(citizensNpcClickListener, this);
 
 
 		bookTutorial = new BookTutorial(this, "Bed Wars");
@@ -178,6 +173,7 @@ public class Bedwars extends JavaPlugin {
 		Bukkit.getPluginManager().registerEvents(new InteractListener(), this);
 		Bukkit.getPluginManager().registerEvents(new ChatListener(), this);
 		Bukkit.getPluginManager().registerEvents(new ChunkUnloadListener(), this);
+		Bukkit.getPluginManager().registerEvents(new BukkitNpcClickListener(), this);
 		
 		// Comandi
 		new BedwarsCommand(this, "bedwars", "bw");
@@ -190,8 +186,17 @@ public class Bedwars extends JavaPlugin {
 		new GlobalCommand(this, "g");
 
 		holographicDisplaysAPI = HolographicDisplaysAPI.get(this);
+		loadArenas();
 
-		// Carica le arene salvate
+		
+		// Timer
+		(tickTimer = new TickTimer()).start();
+		new MySQLKeepAliveTimer().start();
+		new RankingUpdateTimer().start();
+		new SpectatorLocationCheckTimer().start();
+	}
+
+	private void loadArenas() {
 		for (File arenaFile : arenasFolder.listFiles()) {
 			try {
 				if (arenaFile.getName().toLowerCase().endsWith(".yml")) {
@@ -207,12 +212,6 @@ public class Bedwars extends JavaPlugin {
 				return;
 			}
 		}
-		
-		// Timer
-		(tickTimer = new TickTimer()).start();
-		new MySQLKeepAliveTimer().start();
-		new RankingUpdateTimer().start();
-		new SpectatorLocationCheckTimer().start();
 	}
 	
 	@Override
@@ -339,7 +338,7 @@ public class Bedwars extends JavaPlugin {
 	
 	
 	private boolean checkDependancies() {
-		return checkDependancy("WildCommons") && checkDependancy("Citizens") && checkDependancy("HolographicDisplays");
+		return checkDependancy("WildCommons") && checkDependancy("HolographicDisplays");
 	}
 	
 	private boolean checkDependancy(String pluginName) {

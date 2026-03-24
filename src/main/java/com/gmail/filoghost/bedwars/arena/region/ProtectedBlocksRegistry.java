@@ -28,6 +28,7 @@
  */
 package com.gmail.filoghost.bedwars.arena.region;
 
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 
 import com.gmail.filoghost.bedwars.utils.IntVector;
@@ -73,20 +74,26 @@ public class ProtectedBlocksRegistry {
 		}
 	}
 
-	
+
 	private void setProtectionReason(int blockX, int blockY, int blockZ, ProtectionReason protectionReason) {
 		int yIndex = blockY - offset.getY();
+		int xIndex = blockX - offset.getX();
+		int zIndex = blockZ - offset.getZ();
+
+		if (yIndex < 0 || yIndex >= size.getY()
+				|| xIndex < 0 || xIndex >= size.getX()
+				|| zIndex < 0 || zIndex >= size.getZ()) {
+			return;
+		}
+
 		byte[][] yLayer = bitmask[yIndex];
 		if (yLayer == null) {
 			yLayer = new byte[size.getX()][size.getZ()];
 			bitmask[yIndex] = yLayer;
 		}
-		
-		int xIndex = blockX - offset.getX();
-		int zIndex = blockZ - offset.getZ();
+
 		yLayer[xIndex][zIndex] = (byte) (protectionReason.ordinal() + 1);
 	}
-	
 	
 	public ProtectionReason getProtectionReason(Block block) {
 		int yIndex = block.getY() - offset.getY();

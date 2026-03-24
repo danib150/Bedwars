@@ -28,12 +28,6 @@ Questo plugin richiede le seguenti dipendenze:
 * **WildCommons** → [https://github.com/danib150/WildCommons](https://github.com/danib150/WildCommons)
 * **Boosters** → [https://github.com/danib150/Boosters](https://github.com/danib150/Boosters)
 
-⚠️ **Importante:**
-Queste librerie **non sono pubblicate su Maven Central**, quindi devono essere:
-
-* installate manualmente
-* oppure buildate automaticamente tramite GitHub Actions
-
 ---
 
 ## 🧱 Struttura generale

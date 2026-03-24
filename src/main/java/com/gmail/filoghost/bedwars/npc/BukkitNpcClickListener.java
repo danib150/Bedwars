@@ -13,14 +13,7 @@ public class BukkitNpcClickListener implements Listener {
 
     @EventHandler
     public void onRightClick(PlayerInteractEntityEvent event) {
-        if (!(event.getRightClicked() instanceof Villager)) {
-            return;
-        }
-
-        Villager villager = (Villager) event.getRightClicked();
-
-        // controlla che sia un NPC nostro
-        if (!villager.hasMetadata("bw_shop_npc")) {
+        if (!(event.getRightClicked() instanceof Villager villager)) {
             return;
         }
 
@@ -28,7 +21,6 @@ public class BukkitNpcClickListener implements Listener {
 
         Player player = event.getPlayer();
 
-        // cerca a quale NPC corrisponde
         for (Arena arena : Bedwars.getAllArenas()) {
             for (BukkitShopNpc shopNpc : arena.getVillagers()) {
 

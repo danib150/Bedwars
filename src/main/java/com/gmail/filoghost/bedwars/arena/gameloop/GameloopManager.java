@@ -67,8 +67,16 @@ public class GameloopManager {
 	@Getter private CountdownTimer combatCountdownTimer;
 	
 	private long startTime;
-	
-	
+
+	public void forceStart() {
+		if (arena.getArenaStatus() != ArenaStatus.LOBBY) {
+			return;
+		}
+
+		cancelLobbyCountdown();
+		finishLobbyCountdown();
+	}
+
 	public void checkWinners() {
 		if (arena.getArenaStatus() != ArenaStatus.COMBAT) {
 			Utils.reportAnomaly("checking winners in wrong arena status", this, arena.getArenaStatus());

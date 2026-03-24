@@ -35,6 +35,7 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.material.Bed;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.gmail.filoghost.bedwars.Bedwars;
 import com.gmail.filoghost.bedwars.Perms;
@@ -63,6 +64,18 @@ public class BedwarsCommand extends SubCommandFramework {
 		for (SubCommandDetails sub : this.getAccessibleSubCommands(sender)) {
 			sender.sendMessage(ChatColor.GREEN + "/" + this.label + " " + sub.getName() + (sub.getUsage() != null ?  " " + sub.getUsage() : ""));
 		}
+	}
+
+	@SubCommand("start")
+	public void start(CommandSender sender, String[] args) {
+		Player player = CommandValidate.getPlayerSender(sender);
+		Arena arena = Bedwars.getArenaByPlayer(player);
+		if (arena != null) {
+			arena.getGameloop().forceStart();
+			sender.sendMessage("Hai forcestartato la partita");
+			return;
+		}
+		sender.sendMessage("§cNon sei in partita");
 	}
 	
 	@SubCommand("debug")

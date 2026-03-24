@@ -67,7 +67,7 @@ public class BedwarsCommand extends SubCommandFramework {
 	}
 
 	@SubCommand("start")
-	public void start(CommandSender sender, String[] args) {
+	public void start(CommandSender sender, String label, String[] args) {
 		Player player = CommandValidate.getPlayerSender(sender);
 		Arena arena = Bedwars.getArenaByPlayer(player);
 		if (arena != null) {

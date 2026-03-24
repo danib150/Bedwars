@@ -171,7 +171,6 @@ public class GameloopManager {
 		lobbyCountdownTimer = null;
 
 		arena.spawnVillagers();
-		System.out.println("SPAWN VILLAGERS ");
 		// Segna i giocatori senza team
 		List<PlayerStatus> noTeamPlayers = Lists.newArrayList();
 		for (PlayerStatus playerStatus : arena.getPlayerStatuses()) {
